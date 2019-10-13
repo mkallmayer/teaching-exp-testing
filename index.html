@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<meta charset="UTF-8">
+
+<head>
+    <title>Posner Cueing Paradigm</title>
+    <script src="jspsych/jspsych.js"></script>
+    <script src="jspsych/plugins/allg1-blindspot.js"></script>
+    <script src="jspsych/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src="jspsych/plugins/jspsych-instructions.js"></script>
+    <script src="jspsych/plugins/jspsych-survey-text.js"></script>
+    <link href="jspsych/css/jspsych.css" rel="stylesheet" type="text/css">
+    </link>
+</head>
+
+<body></body>
+
+<script>
+
+    var downloadData = function() {
+        // get subject initials
+        var initials = JSON.parse(jsPsych.data.get().filter({trial_type: 'survey-text'}).values()[0].responses).Q0;
+        // append UNIX timestamp (to reduce probability of name collisions)
+        var timestamp = Date.now();
+        var filename = initials+timestamp+".csv";
+        var text = jsPsych.data.get().filter({trial_type: 'posner-cueing', is_practice: 0}).csv();
+
+        // creates downloadable file containing text arg with name filename on client-side and prompts download
+        var fileDL = document.createElement('a');
+        fileDL.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        fileDL.setAttribute('download', filename);
+        fileDL.style.display = 'none';
+        document.body.appendChild(fileDL);
+        fileDL.click();
+        document.body.removeChild(fileDL);
+    }
+
+    var gridX = 15;
+    var gridY = 15;
+
+    var psyRand = jsPsych.randomization;
+    var timeline = [];
+    var trial_number = 1;
+
+    timeline.push(
+        initials = {
+            type: 'survey-text',
+            questions: [{prompt: "Before you begin, please enter your initials"}]
+        }
+    );
+
+    blindspotTrials = []
+    for (var x = 0; x < 16; x++) {
+        for (var y = 0; y < 16; y++) {
+            blindspotTrials.push(
+                blindspot = {
+                    type: 'allg1-blindspot',
+                    x: x,
+                    y: y,
+                    sizeX: gridX,
+                    sizeY: gridY
+                }
+            )
+        }
+    }
+    blindspotTrials = psyRand.shuffleNoRepeats(blindspotTrials);
+
+    timeline = timeline.concat(blindspotTrials);
+
+    jsPsych.init({
+        timeline: timeline,
+        on_trial_finish: function () {
+            setTimeout(jsPsych.resumeExperiment, 200);
+        },
+    })
+</script>
+
+</html>
