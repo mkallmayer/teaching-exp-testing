@@ -1,23 +1,15 @@
 /* ALLG1 TEACHING ONLINE EXPERIMENTS
- * mapping the blindspot
+ * mapping the blindspot  --  post-experiment blindspot map
   * 2019
   */
 
- jsPsych.plugins["allg1-blindspot"] = (function() {
+ jsPsych.plugins["allg1-blindspotmap"] = (function() {
 
     var plugin = {};
   
     plugin.info = {
-      name: "allg1-blindspot",
+      name: "allg1-blindspotmap",
       parameters: {
-        x: {
-          type: jsPsych.plugins.parameterType.INT, // x grid position of target, relative to target area
-          default: undefined
-        },
-        y: {
-          type: jsPsych.plugins.parameterType.INT, // y grid position of target
-          default: undefined
-        },
         sizeX: {
             type: jsPsych.plugins.parameterType.INT, // grid size in x dimension
             default: undefined
@@ -25,26 +17,14 @@
         sizeY: {
             type: jsPsych.plugins.parameterType.INT, // grid size in y dimension
             default: undefined
-        },
-        trialNumber: {
-            type: jsPsych.plugins.parameterType.INT, // current trial
-            default: undefined
-        },
-        totalTrials: {
-            type: jsPsych.plugins.parameterType.INT, // total amount of trials
-            default: undefined
         }
       }
     }
   
     plugin.trial = function(display_element, trial) {
 
-        var targetX     = trial.x;
-        var targetY     = trial.y;
         var gridSizeX   = trial.sizeX;
         var gridSizeY   = trial.sizeY;
-        var trialNumber = trial.trialNumber;
-        var totalTrials = trial.totalTrials;
 
         var fixSize        = 10;   // px
         var targSize       = 20;   // px
@@ -66,8 +46,8 @@
 
         // data saving
         var trialData = {
-            targetX:        targetX,
-            targetY:        targetY,
+            targetX:        trial.targetX,
+            targetY:        trial.targetY,
             gridSizeX:      gridSizeX,
             gridSizeY:      gridSizeY,
             screenX:        screenW,
@@ -77,45 +57,32 @@
 
         // create divs to draw stims in
         divs = {}
-        // div for fix spot
-        var fixLeft = targetOrigX -  (0.3 * cutAway) - (fixSize / 2);
-        var fixTop  = (screenH / 2) - (fixSize / 2);
-        divs['fix'] = document.createElement("div");
-        divs['fix'].style.position = "absolute";
-        divs['fix'].style.left = fixLeft + "px";
-        divs['fix'].style.top =  fixTop  + "px";
-        divs['fix'].setAttribute("class", "centered");
-        display_element.appendChild(divs['fix']);
     
-        // div for feedback text
-        divs['text'] = document.createElement("div");
-        divs['text'].style.position = "absolute";
-        divs['text'].style.left     = fixLeft - 0.05 * window.innerWidth + "px";
-        divs['text'].style.top      = 0.45 * window.innerHeight - textHeight/2 + "px";
-        divs['text'].style.height   = textHeight + "px";
-        divs['text'].style.width    = 0.1 * window.innerWidth + "px";
-        divs['text'].setAttribute("class", "centered");
-        display_element.appendChild(divs['text']);        
-        
-        // div for prgress text
-        divs['prog'] = document.createElement("div");
-        divs['prog'].style.position = "absolute";
-        divs['prog'].style.left     = fixLeft - 0.05 * window.innerWidth + "px";
-        divs['prog'].style.top      = 0.55 * window.innerHeight - textHeight/2 + "px";
-        divs['prog'].style.height   = textHeight + "px";
-        divs['prog'].style.width    = 0.1 * window.innerWidth + "px";
-        divs['prog'].setAttribute("class", "centered");
-        display_element.appendChild(divs['prog']);
-    
-        // div for target
-        var targLeft = targetOrigX + (targetX * targetRange / gridSizeX);
-        var targTop  = targetOrigY + (targetY * targetRange / gridSizeY);
-        divs['targ'] = document.createElement("div");
-        divs['targ'].style.position = "absolute";
-        divs['targ'].style.left = targLeft + "px";
-        divs['targ'].style.top = targTop - targSize/2 + "px";
-        divs['targ'].setAttribute("class", "centered");
-        display_element.appendChild(divs['targ']);
+        responses = jsPsych.data.get().filter({trial_type: 'allg1-blindspot'}).values()
+
+        for (var i=0; i<responses.length; i++){
+            var targetX = responses[i].targetX;
+            var targetY = responses[i].targetY;
+            // div for target
+            var targLeft = targetOrigX + (targetX * targetRange / gridSizeX);
+            var targTop  = targetOrigY + (targetY * targetRange / gridSizeY);
+            var targDiv = document.createElement("div");
+            targDiv.style.position = "absolute";
+            targDiv.style.left = targLeft + "px";
+            targDiv.style.top = targTop - targSize/2 + "px";
+            targDiv.setAttribute("class", "centered");
+            display_element.appendChild(targDiv);
+
+            switch (responses[i].responseVisible){
+                case 1:
+                    targDiv.innerHTML = "<img src='jspsych/target_blue.png'></img>";  // draw visible target
+                    break;
+                case 0:
+                    targDiv.innerHTML = "<img src='jspsych/target_black.png'></img>";  // draw non visible target
+                    break;
+            }
+        }
+
 
 
         var drawFix = function(color){

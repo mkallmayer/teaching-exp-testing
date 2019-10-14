@@ -4,14 +4,27 @@
 <meta charset="UTF-8">
 
 <head>
-    <title>Posner Cueing Paradigm</title>
+    <title>Mapping the blind spot</title>
     <script src="jspsych/jspsych.js"></script>
     <script src="jspsych/plugins/allg1-blindspot.js"></script>
+    <script src="jspsych/plugins/allg1-blindspotmap.js"></script>
     <script src="jspsych/plugins/jspsych-html-keyboard-response.js"></script>
     <script src="jspsych/plugins/jspsych-instructions.js"></script>
     <script src="jspsych/plugins/jspsych-survey-text.js"></script>
+    <script src="jspsych/plugins/jspsych-fullscreen.js"></script>
     <link href="jspsych/css/jspsych.css" rel="stylesheet" type="text/css">
     </link>
+
+    <style>
+    .centered
+    {
+        text-align: center;
+        vertical-align: top;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+    }
+    </style>
 </head>
 
 <body></body>
@@ -36,12 +49,29 @@
         document.body.removeChild(fileDL);
     }
 
-    var gridX = 15;
-    var gridY = 15;
+    jsPsych.pluginAPI.preloadImages(
+        [
+            "jspsych/target.png",
+            "jspsych/target_blue.png", 
+            "jspsych/target_black.png",
+            "jspsych/fix_blue.png", 
+            "jspsych/fix_green.png"
+        ],
+        function(){ console.log("image preloading successful"); },
+        function(){ console.log("preloading images") }
+    );
+
+    var gridX = 5;  // 16
+    var gridY = 5;  // 16
 
     var psyRand = jsPsych.randomization;
     var timeline = [];
     var trial_number = 1;
+
+    timeline.push({
+        type: 'fullscreen',
+        fullscreen_mode: true
+    });
 
     timeline.push(
         initials = {
@@ -51,22 +81,48 @@
     );
 
     blindspotTrials = []
-    for (var x = 0; x < 16; x++) {
-        for (var y = 0; y < 16; y++) {
+    for (var x = 0; x < gridX+1; x++) {
+        for (var y = 0; y < gridY+1; y++) {
             blindspotTrials.push(
                 blindspot = {
                     type: 'allg1-blindspot',
                     x: x,
                     y: y,
                     sizeX: gridX,
-                    sizeY: gridY
+                    sizeY: gridY,
+                    totalTrials: (gridX + 1) * (gridY + 1)
                 }
             )
         }
     }
     blindspotTrials = psyRand.shuffleNoRepeats(blindspotTrials);
 
+    for (var i=0; i<blindspotTrials.length; i++){
+        blindspotTrials[i].trialNumber = i+1;
+    }
+
     timeline = timeline.concat(blindspotTrials);
+
+    timeline.push(
+        preMap = {
+            type: 'instructions',
+            pages: [
+                "You have completed the experiment.<br><br>" +
+                "On the following page, you will be able to see your mapped blind spot. Blue circles will indicate that you were able to see the target in that position, " +
+                "black circles will indicate that you were not.<br><br>" +
+                "Press the right arrow key on your keyboard to proceed to the next page.<br><br>" +
+                "[->]"
+            ]
+        }
+    )
+
+    timeline.push(
+        map = {
+            type: 'allg1-blindspotmap',
+            sizeX: gridX,
+            sizeY: gridY,
+        }
+    )
 
     jsPsych.init({
         timeline: timeline,
